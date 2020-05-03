@@ -1,6 +1,5 @@
 
-#声明:
-## 1 下载ffmpeg,
+## 1 下载ffmpeg
 下载完到安装目录bin下 将ffmpeg.exe,ffprobe.exe复制到当前目录  
 链接 http://ffmpeg.org/download.html
 ## 2 下载 imagemagick
