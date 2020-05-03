@@ -221,7 +221,7 @@ def video_add_subtitle(speech_infos):
     # 字幕位置
     position = ("center", "bottom")
     # 字体大小
-    fontsize = 25
+    fontsize = 50
     # 字幕
     txts = []
     # z字幕偏移值 单位秒
