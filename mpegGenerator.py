@@ -5,7 +5,7 @@
 @Author  :   JiahuaLink
 @Version :   1.0
 @Contact :   840132699@qq.com
-@License :   (C)Copyright 2020, Liugroup-NLPR-CASIA
+@License :   (C)Copyright 2020
 @Desc    :  营销号生成器
 '''
 
@@ -74,17 +74,17 @@ def generate_copywriting_text():
     thing = '经常多人运动'
     other_word = '王者五排开黑'
     text = '''{0}{1}是怎么回事呢？
-{0}相信大家都很熟悉
-但是{0}{1}是怎么回事呢？
-下面就让小编带大家一起了解吧
-{0}{1}，其实就是{2}
-大家可能会很惊讶{0}怎么会{1}呢？
-但事实就是这样
-小编也感到非常惊讶
-这就是关于{0}{1}的所有事情了
-大家有什么想法呢？
-欢迎在评论区告诉小编,一起讨论吧！
-'''.format(body, thing, other_word)
+            {0}相信大家都很熟悉
+            但是{0}{1}是怎么回事呢？
+            下面就让小编带大家一起了解吧
+            {0}{1}，其实就是{2}
+            大家可能会很惊讶{0}怎么会{1}呢？
+            但事实就是这样
+            小编也感到非常惊讶
+            这就是关于{0}{1}的所有事情了
+            大家有什么想法呢？
+            欢迎在评论区告诉小编,一起讨论吧！
+            '''.format(body, thing, other_word)
     with open(copywriting_text, encoding='utf-8-sig', mode='w') as f:
         f.write(text)
 
@@ -105,7 +105,7 @@ def generate_speech_audio(volume):
             speechfile = os.path.join(temp_path, 'speech{}.wav'.format(index))
             text2speech(line, speechfile)
             seconds = int(get_audio_length(speechfile)*1000)
-            # 语音文本信息 文件，开始播放时间，持续时间，播放内容
+            # 语音文本信息 文件名，开始播放时间，持续时间，播放内容
             temp = [speechfile, play_index, seconds, line]
             speech_infos.append(temp)
             play_index += seconds + pause
@@ -253,6 +253,7 @@ def clean_tempfile():
     if os.path.exists(temp_path):
         shutil.rmtree(temp_path)
 
+
 def init(temp_path):
     if not os.path.exists(temp_path):
         os.mkdir(temp_path)
@@ -260,7 +261,7 @@ def init(temp_path):
 
 if __name__ == '__main__':
     # 文案生成
-    
+
     root_dir = os.path.abspath('.')
     bgm_path = os.path.join(root_dir, 'bgm')
     video_path = os.path.join(root_dir, 'video')
