@@ -45,15 +45,15 @@ def text2speech(text, out_file):
     tts_request = TtsRequest(text)
     # 设置请求，所有参数均可不设置，使用默认参数
     # 设置发声人，默认xiaoyan，xiaoqi 正式女生xiaoyu正式男生xiaoyan情感女生xiaowang童声
-    tts_request.set_voice_name('xiaoyan')
+    tts_request.set_voice_name('xiaoyu')
     # 设置采样率，默认8k
     tts_request.set_sample_rate('8k')
     # 设置音量，[-20, 20]，默认0
-    tts_request.set_volume(0)
+    tts_request.set_volume(17)
     # 设置音高, [-500, 500], 默认0
-    tts_request.set_pitch_rate(2)
+    tts_request.set_pitch_rate(4)
     # 设置音速, [-500, 500], 默认0
-    tts_request.set_speech_speed(-10)
+    tts_request.set_speech_speed(0)
     # 设置是否保存，默认False
     tts_request.set_saved(True)
     # 设置保存路径，只有设置保存，此参数才生效
@@ -71,14 +71,12 @@ def text2speech(text, out_file):
 
 
 def generate_copywriting_text(body, thing, other):
-    text=''
+    text = '{0}{1}是怎么回事呢？\n下面就让小编带大家一起了解吧\n'.format(body, thing)
     if copywriting_select == '沙雕':
         print("沙雕营销号文案生成")
-        text = '''
-                {0}{1}是怎么回事呢？
+        text = text+'''
                 {0}相信大家都很熟悉
                 但是{0}{1}是怎么回事呢？
-                下面就让小编带大家一起了解吧
                 {0}{1}，其实就是{2}
                 大家可能会很惊讶{0}怎么会{1}呢？
                 但事实就是这样
@@ -88,15 +86,16 @@ def generate_copywriting_text(body, thing, other):
                 欢迎在评论区告诉小编,一起讨论吧！
                 '''.format(body, thing, other)
     if copywriting_select == '专业':
-        print("生成营销号文案生成")
-        ToutiaoSpider(body+thing).run()
-
-
-
-
-
+        print("专业版营销号文案生成") 
+        ttspider = ToutiaoSpider(body+thing)
+        text += ttspider.random_chooose_descript(body+thing, 12, 4)
+        
+    text +='''本视频由营销号生成器自动生成
+                大家有什么想法呢？
+                那就点赞投币收藏吧'''
     with open(copywriting_text, encoding='utf-8-sig', mode='w') as f:
         f.write(text)
+        
 
 
 def generate_speech_audio():
@@ -122,7 +121,7 @@ def compose_speech_audio(text_list, volume):
     '''合成人声 参数 :音量大小'''
     speech_infos = []
     # 语音播放的开始时间坐标:毫秒
-    play_index = 1000
+    play_index = 2000
     # 每句话停顿时间:毫秒
     pause = 800
     input_files = ''
@@ -248,7 +247,7 @@ def video_add_subtitle(speech_infos):
     # 字幕位置
     position = ("center", "bottom")
     # 字体大小
-    fontsize = 50
+    fontsize = 35
     # 字幕
     txts = []
     # z字幕偏移值 单位秒
@@ -271,7 +270,7 @@ def video_add_subtitle(speech_infos):
 def random_choose_file(path):
     fileList = os.listdir(path)
     filePath = os.path.join(path, random.sample(fileList, 1)[0])
-    print("choose :"+filePath)
+    print("选择素材:"+filePath)
     return filePath
 
 
@@ -280,6 +279,7 @@ def clean_tempfile():
     if os.path.exists(temp_path):
         shutil.rmtree(temp_path)
 
+
 def init(temp_path):
     if not os.path.exists(temp_path):
         os.makedirs(temp_path)
@@ -287,7 +287,7 @@ def init(temp_path):
 
 if __name__ == '__main__':
     # 文案选择 沙雕  or  专业
-    copywriting_select = '沙雕'
+    copywriting_select = '专业'
     # 文案关键词
     keyword = '罗志祥'
     # 事件
@@ -322,11 +322,10 @@ if __name__ == '__main__':
     generate_copywriting_text(keyword, thing, other)
     # 调接口生成语句人声语音文件
     text_list = generate_speech_audio()
-    # 根据语句合集 合成文案人声 参数音量大小设置
+    # 根据语句合集 合成文案人声 参数：音量大小db
     speech_infos = compose_speech_audio(text_list, 30)
-    # 合成bgm
+    # 合成bgm 参数：音量大小
     generate_bgm_audio(0)
-
     # 混音人声+bgm
     mix_audio()
     # 给视频加背景音乐
