@@ -9,9 +9,9 @@
 @Desc    :  营销号生成器
 '''
 
-
 import json
 import random
+import re
 import shutil
 import subprocess
 import threading
@@ -23,15 +23,16 @@ from huaweicloud_sis.bean.tts_request import TtsRequest
 from huaweicloud_sis.client.tts_client import TtsClient
 from huaweicloud_sis.exception.exceptions import (ClientException,
                                                   ServerException)
+from toutiaoSpider import ToutiaoSpider
 
 
 def text2speech(text, out_file):
-    """ 语音合成demo """
+    """ 语音合成 """
     ak = 'GVOC7YSBOBAO3VZ38TPW'
     sk = 'EpbGXUHTHoffHjj07W8UNWsGhxNEnEPESp7Gr6Qj'
     region = 'cn-north-1'     # region，如cn-north-1
     path = out_file       # 保存路径，需要具体到音频文件，如D:/test.wav，可在设置中选择不保存本地
-
+    # print("合成 "+text)
     # step1 初始化客户端
     config = SisConfig()
     config.set_connect_timeout(10)       # 设置连接超时
@@ -66,49 +67,75 @@ def text2speech(text, out_file):
     except ServerException as e:
         print(e)
     # print(json.dumps(result, indent=2, ensure_ascii=False))
-    print("已合成"+path)
+    print("已合成语音片段 "+text)
 
 
-def generate_copywriting_text():
-    body = '罗志祥'
-    thing = '经常多人运动'
-    other_word = '王者五排开黑'
-    text = '''{0}{1}是怎么回事呢？
-            {0}相信大家都很熟悉
-            但是{0}{1}是怎么回事呢？
-            下面就让小编带大家一起了解吧
-            {0}{1}，其实就是{2}
-            大家可能会很惊讶{0}怎么会{1}呢？
-            但事实就是这样
-            小编也感到非常惊讶
-            这就是关于{0}{1}的所有事情了
-            大家有什么想法呢？
-            欢迎在评论区告诉小编,一起讨论吧！
-            '''.format(body, thing, other_word)
+def generate_copywriting_text(body, thing, other):
+    text=''
+    if copywriting_select == '沙雕':
+        print("沙雕营销号文案生成")
+        text = '''
+                {0}{1}是怎么回事呢？
+                {0}相信大家都很熟悉
+                但是{0}{1}是怎么回事呢？
+                下面就让小编带大家一起了解吧
+                {0}{1}，其实就是{2}
+                大家可能会很惊讶{0}怎么会{1}呢？
+                但事实就是这样
+                小编也感到非常惊讶
+                这就是关于{0}{1}的所有事情了
+                大家有什么想法呢？
+                欢迎在评论区告诉小编,一起讨论吧！
+                '''.format(body, thing, other)
+    if copywriting_select == '专业':
+        print("生成营销号文案生成")
+        ToutiaoSpider(body+thing).run()
+
+
+
+
+
     with open(copywriting_text, encoding='utf-8-sig', mode='w') as f:
         f.write(text)
 
 
-def generate_speech_audio(volume):
+def generate_speech_audio():
+    '''生成人声片段 '''
+    textList = []
+    with open(copywriting_text, encoding='utf-8-sig') as f:
+        for index, line in enumerate(f.readlines()):
+            line = re.sub(r'[\n|?|!|.wav]', '', line).strip()
+            if line:
+                speechfile = os.path.join(
+                    temp_speech_path, '{}.wav'.format(line))
+                textList.append(speechfile)
+                # 单线程跑
+                # text2speech(line, speechfile)
+                # 多线程跑
+                t = threading.Thread(target=text2speech(line, speechfile))
+                t.start()
+                t.join()
+        return textList
+
+
+def compose_speech_audio(text_list, volume):
     '''合成人声 参数 :音量大小'''
     speech_infos = []
-    # 语音播放的时间坐标:毫秒
+    # 语音播放的开始时间坐标:毫秒
     play_index = 1000
-    # 停顿时间:毫秒
-    pause = 1000
+    # 每句话停顿时间:毫秒
+    pause = 800
     input_files = ''
     delindex = ''
     filter_complex = ''
-    tempfile = os.path.join(temp_path, 'speech.wav')
-    with open(copywriting_text, encoding='utf-8-sig') as f:
-        for index, line in enumerate(f.readlines()):
-            speechfile = os.path.join(temp_path, 'speech{}.wav'.format(index))
-            text2speech(line, speechfile)
-            seconds = int(get_audio_length(speechfile)*1000)
-            # 语音文本信息 文件名，开始播放时间，持续时间，播放内容
-            temp = [speechfile, play_index, seconds, line]
-            speech_infos.append(temp)
-            play_index += seconds + pause
+    tempfile = speech_file
+    for speech in text_list:
+        seconds = int(get_audio_length(speech)*1000)
+        line = os.path.basename(speech).replace('.wav', '')
+        # 语音文本信息 文件名，开始播放时间，持续时间，播放内容
+        temp = [speech, play_index, seconds, line]
+        speech_infos.append(temp)
+        play_index += seconds + pause
 
     # 合成人声
     for index, speech_info in enumerate(speech_infos):
@@ -177,10 +204,10 @@ def getLenTime(filename):
 def generate_bgm_audio(volume):
     '''参数 :音量大小'''
 
-    cut_temp = os.path.join(temp_path, 'cut_temp.wav')
+    cut_temp = os.path.join(temp_speech_path, 'cut_temp.wav')
     total_time = getLenTime(speech_file)
     print("剪切bgm的长度和人声长度一致")
-    cmd = 'ffmpeg -y -i {wav} -ss 00:00:00.0 -t {time} -acodec copy {cut_temp}'.format(
+    cmd = 'ffmpeg -y -i {wav} -ss 00:00:00.0 -t {time} -acodec copy -b:a 320k {cut_temp}'.format(
         wav=bgmfile, time=total_time, cut_temp=cut_temp)
     subprocess.call(cmd, shell=True)
     # 调节bgm音量
@@ -198,7 +225,7 @@ def mix_audio():
 
 
 def video_add_bgm():
-    nosound_file = os.path.join(temp_path, 'nosound.mp4')
+    nosound_file = os.path.join(temp_path, 'video_nosound.mp4')
     total_time = getLenTime(speech_file)
     # 先把视频无声
     nosound_cmd = 'ffmpeg -i {input_file} -c:v copy -an -y {nosound_file}'.format(
@@ -253,40 +280,53 @@ def clean_tempfile():
     if os.path.exists(temp_path):
         shutil.rmtree(temp_path)
 
-
 def init(temp_path):
     if not os.path.exists(temp_path):
-        os.mkdir(temp_path)
+        os.makedirs(temp_path)
 
 
 if __name__ == '__main__':
-    # 文案生成
+    # 文案选择 沙雕  or  专业
+    copywriting_select = '沙雕'
+    # 文案关键词
+    keyword = '罗志祥'
+    # 事件
+    thing = '经常多人运动'
+    # 另一种说法
+    other = '王者五排开黑'
 
     root_dir = os.path.abspath('.')
     bgm_path = os.path.join(root_dir, 'bgm')
     video_path = os.path.join(root_dir, 'video')
-    temp_path = os.path.join(root_dir, 'temp')
+    temp_path = os.path.join(root_dir, 'temp', keyword+thing)
     output_Path = os.path.join(root_dir, 'output')
 
-    init(temp_path)
+    temp_copywriting_path = os.path.join(temp_path, 'copywriting')
+    temp_speech_path = os.path.join(temp_path, 'speech')
+    init(temp_copywriting_path)
+    init(temp_speech_path)
 
-    copywriting_text = os.path.join(temp_path, "copywriting")
-    speech_file = os.path.join(temp_path, "speech.wav")
-    output_wavfile = os.path.join(temp_path, 'mixed.wav')
+    copywriting_text = os.path.join(temp_copywriting_path, "copywriting.txt")
+    speech_file = os.path.join(temp_speech_path, "speech.wav")
+
+    output_wavfile = os.path.join(temp_speech_path, 'mixed.wav')
     video_notext_file = os.path.join(temp_path, 'video_notext.mp4')
-    speech_vol = os.path.join(temp_path, 'speech_vol.wav')
-    bgm_vol = os.path.join(temp_path, 'bgm_vol.wav')
+    speech_vol = os.path.join(temp_speech_path, 'speech_vol.wav')
+    bgm_vol = os.path.join(temp_speech_path, 'bgm_vol.wav')
 
     bgmfile = random_choose_file(bgm_path)
     input_file = random_choose_file(video_path)
 
-    ouput_file = os.path.join(output_Path, 'output.mp4')
+    ouput_file = os.path.join(output_Path, keyword+thing+'.mp4')
     # 生成文案人声文件
-    generate_copywriting_text()
-    # 合成文案人声语音文件 参数音量大小设置
-    speech_infos = generate_speech_audio(20)
+    generate_copywriting_text(keyword, thing, other)
+    # 调接口生成语句人声语音文件
+    text_list = generate_speech_audio()
+    # 根据语句合集 合成文案人声 参数音量大小设置
+    speech_infos = compose_speech_audio(text_list, 30)
     # 合成bgm
     generate_bgm_audio(0)
+
     # 混音人声+bgm
     mix_audio()
     # 给视频加背景音乐
@@ -294,4 +334,4 @@ if __name__ == '__main__':
     # 给视频加字幕
     video_add_subtitle(speech_infos)
     # 清理缓存
-    clean_tempfile()
+    # clean_tempfile()
