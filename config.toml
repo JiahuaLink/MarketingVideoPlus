@@ -1,0 +1,63 @@
+[app]
+    # Pexels API Key
+    # Register at https://www.pexels.com/api/ to get your API key.
+    # You can use multiple keys to avoid rate limits.
+    # For example: pexels_api_keys = ["123456789","abcdefghi"]
+    pexels_api_keys = ['Z3nAUVZjxM7zswgFdGyUIeNZG75yLTVHRCYnwUpxeTqNarJPVCqAD42B']
+
+    llm_provider="moonshot" # "openai" or "moonshot" or "oneapi"
+
+    # OpenAI API Key
+    # Visit https://openai.com/api/ for details on obtaining an API key.
+#    openai_api_key = "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"
+#    openai_base_url = ""
+#    openai_model_name = "gpt-3.5-turbo"
+
+    # Moonshot API Key
+    # Visit https://platform.moonshot.cn/console/api-keys to get your API key.
+    moonshot_api_key="sk-slDx0nJVpq0Ow2CgZbFopTUhyvzlw3R1QhoEd5lxIiEqTElf"
+    moonshot_base_url = "https://api.moonshot.cn/v1"
+    moonshot_model_name = "moonshot-v1-8k"
+
+    # OneAPI API Key
+    # Visit https://github.com/songquanpeng/one-api to get your API key
+    oneapi_api_key=""
+    oneapi_base_url=""
+    oneapi_model_name=""
+
+    # Subtitle Provider, "edge" or "whisper"
+    # If empty, the subtitle will not be generated
+    subtitle_provider = "edge"
+
+    # Once you have installed it, ImageMagick will be automatically detected, except on Windows!
+    # On Windows, for example "C:\Program Files (x86)\ImageMagick-7.1.1-Q16-HDRI\magick.exe"
+    # Download from https://imagemagick.org/archive/binaries/ImageMagick-7.1.1-29-Q16-x64-static.exe
+    imagemagick_path = "/opt/homebrew/Cellar/imagemagick/7.1.1-29_1/bin"
+
+[whisper]
+    # Only effective when subtitle_provider is "whisper"
+
+    # Run on GPU with FP16
+    # model = WhisperModel(model_size, device="cuda", compute_type="float16")
+
+    # Run on GPU with INT8
+    # model = WhisperModel(model_size, device="cuda", compute_type="int8_float16")
+
+    # Run on CPU with INT8
+    # model = WhisperModel(model_size, device="cpu", compute_type="int8")
+
+    # recommended model_size: "large-v3"
+    model_size="large-v3"
+    # if you want to use GPU, set device="cuda"
+    device="CPU"
+    compute_type="int8"
+
+[pexels]
+    video_concat_mode="sequential" # "random" or "sequential"
+    [pexels.proxies]
+        ### Use a proxy to access the Pexels API
+        ### Format: "http://<username>:<password>@<proxy>:<port>"
+        ### Example: "http://user:pass@proxy:1234"
+        ### Doc: https://requests.readthedocs.io/en/latest/user/advanced/#proxies
+        # http = "http://10.10.1.10:3128"
+        # https = "http://10.10.1.10:1080"
